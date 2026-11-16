@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FTMO Tracker</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background-color: #ffffff;
+      color: #222222;
+      display: flex;
+      justify-content: center;
+      padding: 6px;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+
+    .screen {
+      width: 100%;
+      max-width: 390px;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 30px;
+    }
+
+    /* 1. LAS DOS BARRAS HORIZONTALES SUPERIORES */
+    .top-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 2px 0;
+    }
+
+    .bar-bg {
+      width: 100%;
+      height: 14px;
+      background-color: #cccccc;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #0000ff;
+      transition: width 0.25s ease, background-color 0.25s ease;
+    }
+
+    /* 2. BLOQUE PRINCIPAL CON BORDE NEGRO */
+    .main-box {
+      border: 2px solid #000000;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background-color: #ffffff;
+    }
+
+    .header-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .spinner-select {
+      width: 100%;
+      height: 44px;
+      background-color: #ffffff;
+      border: 2px solid #82b71a;
+      border-radius: 6px;
+      font-size: 15px;
+      color: #222222;
+      padding: 0 10px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .btn-gray {
+      width: 100%;
+      background-color: #dddddd;
+      border: 1px solid #999999;
+      border-radius: 4px;
+      color: #222222;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .btn-gray:active {
+      background-color: #cccccc;
+      transform: translateY(1px);
+    }
+
+    .btn-gray:disabled {
+      background-color: #e0e0e0;
+      color: #999999;
+      border-color: #cccccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-next {
+      height: 42px;
+    }
+
+    /* Cuadrícula de los 4 círculos */
+    .circles-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 10px;
+      padding: 6px 4px;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .circle-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    svg {
+      transform: rotate(-90deg);
+    }
+
+    .c-track {
+      fill: none;
+      stroke: #e6e6e6;
+    }
+
+    .c-prog {
+      fill: none;
+      stroke: #0000ff;
+      transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+    }
+
+    .c-center-text {
+      position: absolute;
+      text-align: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: #222222;
+      line-height: 1.1;
+    }
+
+    .c-center-text small {
+      display: block;
+      font-size: 9px;
+      font-weight: normal;
+      color: #555555;
+    }
+
+    .mid-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .btn-action {
+      height: 56px;
+      font-size: 18px;
+    }
+
+    /* 3. BLOQUE INTERMEDIO CON BORDE VERDE LIMA */
+    .middle-box {
+      border: 2px solid #82b71a;
+      padding: 6px;
+      display: grid;
+      grid-template-columns: 1.35fr 1.25fr 0.55fr;
+      gap: 6px;
+      align-items: center;
+      background-color: #ffffff;
+    }
+
+    .num-input {
+      width: 100%;
+      height: 68px;
+      border: 1px solid #cccccc;
+      border-radius: 6px;
+      font-size: 22px;
+      color: #555555;
+      padding: 0 10px;
+      outline: none;
+      background-color: #ffffff;
+    }
+
+    .summary-pair {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 4px;
+      height: 68px;
+    }
+
+    .sub-box {
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 9px;
+      color: #000000;
+      background-color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .wd-line-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .mini-bar-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
+    }
+
+    .mini-bar-bg {
+      width: 100%;
+      height: 6px;
+      background-color: #e0e0e0;
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #82b71a;
+      transition: width 0.2s ease;
+    }
+
+    .mini-bar-txt {
+      font-size: 8px;
+      color: #555555;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .wd-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 14px;
+      color: #222222;
+      height: 68px;
+    }
+
+    .wd-area input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .bottom-box {
+      border: 2px solid #000000;
+      padding: 6px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background-color: #ffffff;
+    }
+
+    .btn-bottom {
+      height: 58px;
+      font-size: 19px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="screen">
+  <!-- DOS BARRAS HORIZONTALES SUPERIORES -->
+  <div class="top-bars">
+    <div class="bar-bg" title="Rentabilidad Global">
+      <div class="bar-fill" id="bar-rent"></div>
+    </div>
+    <div class="bar-bg" title="Objetivo Mensual">
+      <div class="bar-fill" id="bar-month"></div>
+    </div>
+  </div>
+
+  <!-- CAJA PRINCIPAL CON BORDE NEGRO -->
+  <div class="main-box">
+    <div class="header-row">
+      <select id="spinner" class="spinner-select">
+        <option value="amount">Cantidad</option>
+        <option value="percentage">Porcentaje</option>
+        <option value="capital">Capital</option>
+        <option value="calibrate">Calibrar</option>
+        <option value="aux">Aux</option>
+        <option value="compras">Gift Card</option>
+        <option value="my_little_cont">Cont</option>
+      </select>
+      <button class="btn-gray btn-next" id="btn-next">Next</button>
+    </div>
+
+    <!-- 4 CÍRCULOS AZULES -->
+    <div class="circles-area">
+      <div class="circle-wrap">
+        <svg width="136" height="136">
+          <circle class="c-track" cx="68" cy="68" r="56" stroke-width="12"></circle>
+          <circle class="c-prog" id="c1" cx="68" cy="68" r="56" stroke-width="12"></circle>
+        </svg>
+        <div class="c-center-text">
+          <span id="c1-txt">0%</span>
+          <small>DD 10%</small>
+        </div>
+      </div>
+
+      <div class="circle-wrap">
+        <svg width="110" height="110">
+          <circle class="c-track" cx="55" cy="55" r="44" stroke-width="11"></circle>
+          <circle class="c-prog" id="c2" cx="55" cy="55" r="44" stroke-width="11"></circle>
+        </svg>
+        <div class="c-center-text">
+          <span id="c2-txt">0%</span>
+          <small>Colchón 5%</small>
+        </div>
+      </div>
+
+      <div class="circle-wrap">
+        <svg width="110" height="110">
+          <circle class="c-track" cx="55" cy="55" r="44" stroke-width="11"></circle>
+          <circle class="c-prog" id="c3" cx="55" cy="55" r="44" stroke-width="11"></circle>
+        </svg>
+        <div class="c-center-text">
+          <span id="c3-txt">0%</span>
+          <small>DW 10%</small>
+        </div>
+      </div>
+
+      <div class="circle-wrap">
+        <svg width="126" height="126">
+          <circle class="c-track" cx="63" cy="63" r="51" stroke-width="11"></circle>
+          <circle class="c-prog" id="c4" cx="63" cy="63" r="51" stroke-width="11"></circle>
+        </svg>
+        <div class="c-center-text">
+          <span id="c4-txt">0%</span>
+          <small id="c4-sub">Aux 10%</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="mid-buttons">
+      <button class="btn-gray btn-action" id="btn-yes">Yes baby</button>
+      <button class="btn-gray btn-action" id="btn-ups">Ups! / WD</button>
+    </div>
+  </div>
+
+  <!-- CAJA INTERMEDIA CON BORDE VERDE LIMA -->
+  <div class="middle-box">
+    <input type="number" id="input-num" class="num-input" placeholder="0" step="any">
+
+    <div class="summary-pair">
+      <div class="sub-box">
+        <div>Capital:</div>
+        <div>W/L:</div>
+        <div>Total WD:</div>
+      </div>
+      <div class="sub-box">
+        <div id="val-cap">10000 0,0%</div>
+        <div id="val-wl">0/0</div>
+        <div class="wd-line-wrap">
+          <span id="val-wd">0</span>
+          <div class="mini-bar-container">
+            <div class="mini-bar-bg">
+              <div class="mini-bar-fill" id="mini-bar"></div>
+            </div>
+            <div class="mini-bar-txt" id="mini-bar-txt">0/0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <label class="wd-area">
+      <input type="checkbox" id="chk-wd">
+      <span>WD</span>
+    </label>
+  </div>
+
+  <!-- CAJA INFERIOR -->
+  <div class="bottom-box">
+    <button class="btn-gray btn-bottom" id="btn-save">Save</button>
+    <button class="btn-gray btn-bottom" id="btn-restore">Restore</button>
+  </div>
+</div>
+
+<script>
+  const INITIAL_STATE = {
+    capitalBase: 10000,
+    capitalActual: 10000,
+    totalGanado: 0,
+    totalPerdido: 0,
+    totalRetirado: 0,
+    mesNeto: 0,
+    opsWin: 0,
+    opsLoss: 0,
+    savedAmount: 0,
+    savedPct: 0,
+    activeMode: 'amount',
+    auxLimit: 10,
+    littleLimit: 0,
+    littleCurrent: 0
+  };
+
+  let data = JSON.parse(localStorage.getItem('ftmo_exact_ui')) || { ...INITIAL_STATE };
+
+  function persist() {
+    localStorage.setItem('ftmo_exact_ui', JSON.stringify(data));
+    render();
+  }
+
+  window.addEventListener('pageshow', () => {
+    const saved = localStorage.getItem('ftmo_exact_ui');
+    if (saved) { try { data = JSON.parse(saved); render(); } catch(e) {} }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      const saved = localStorage.getItem('ftmo_exact_ui');
+      if (saved) { try { data = JSON.parse(saved); render(); } catch(e) {} }
+    }
+  });
+
+  function updateCircle(id, r, pct, color = '#0000ff') {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const circ = 2 * Math.PI * r;
+    const clamped = Math.max(0, Math.min(100, pct));
+    el.style.strokeDasharray = `${circ} ${circ}`;
+    el.style.strokeDashoffset = circ - (clamped / 100) * circ;
+    el.style.stroke = color;
+  }
+
+  function render() {
+    const barRent = document.getElementById('bar-rent');
+    if (data.capitalBase > 0) {
+      const diffPct = ((data.capitalActual - data.capitalBase) / data.capitalBase) * 100;
+      const fillBar = Math.max(0, Math.min(100, ((diffPct + 10) / 20) * 100));
+      barRent.style.width = `${fillBar}%`;
+
+      if (diffPct < 0) barRent.style.backgroundColor = '#e74c3c';
+      else if (diffPct < 3) barRent.style.backgroundColor = '#f39c12';
+      else if (diffPct < 8) barRent.style.backgroundColor = '#0000ff';
+      else barRent.style.backgroundColor = '#ff69b4';
+    } else {
+      barRent.style.width = '0%';
+      barRent.style.backgroundColor = '#0000ff';
+    }
+
+    const monthPct = data.capitalBase > 0 ? (data.mesNeto / data.capitalBase) * 100 : 0;
+    const barMonth = document.getElementById('bar-month');
+    const fillMonth = Math.max(0, Math.min(100, (monthPct / 6) * 100));
+    barMonth.style.width = `${fillMonth}%`;
+    barMonth.style.backgroundColor = monthPct < 0 ? '#e74c3c' : '#0000ff';
+
+    const diff = data.capitalActual - data.capitalBase;
+    const diffPctCircle = data.capitalBase > 0 ? (diff / data.capitalBase) * 100 : 0;
+
+    const dd = diffPctCircle < 0 ? Math.abs(diffPctCircle) : 0;
+    updateCircle('c1', 56, (dd / 10) * 100, dd > 0 ? '#e74c3c' : '#0000ff');
+    document.getElementById('c1-txt').textContent = `${dd.toFixed(1)}%`;
+
+    const c2Val = diffPctCircle > 0 ? Math.min(5, diffPctCircle) : 0;
+    updateCircle('c2', 44, (c2Val / 5) * 100, '#0000ff');
+    document.getElementById('c2-txt').textContent = `${c2Val.toFixed(1)}%`;
+
+    const c3Val = diffPctCircle > 5 ? Math.min(10, diffPctCircle - 5) : 0;
+    updateCircle('c3', 44, (c3Val / 10) * 100, '#0000ff');
+    document.getElementById('c3-txt').textContent = `${c3Val.toFixed(1)}%`;
+
+    const auxMax = Math.max(1, data.auxLimit);
+    const threshold = 15; 
+    const c4Val = diffPctCircle > threshold ? Math.min(auxMax, diffPctCircle - threshold) : 0;
+    const c4Color = c4Val > 0 ? '#2ed573' : '#0000ff';
+    updateCircle('c4', 51, (c4Val / auxMax) * 100, c4Color);
+    document.getElementById('c4-txt').textContent = `${c4Val.toFixed(1)}%`;
+    document.getElementById('c4-sub').textContent = `Aux ${data.auxLimit}%`;
+
+    const netLifetime = data.totalGanado - data.totalPerdido;
+    const lifePct = data.capitalBase > 0 ? (netLifetime / data.capitalBase) * 100 : 0;
+    const pctComma = lifePct.toFixed(1).replace('.', ',');
+
+    document.getElementById('val-cap').textContent = `${Math.round(data.capitalActual)} ${pctComma}%`;
+    document.getElementById('val-wl').textContent = `${Math.round(data.totalGanado)}/${Math.round(data.totalPerdido)}`;
+    document.getElementById('val-wd').textContent = `${Math.round(data.totalRetirado)}`;
+
+    const miniBar = document.getElementById('mini-bar');
+    const miniBarTxt = document.getElementById('mini-bar-txt');
+    if (data.littleLimit > 0) {
+      const fillPct = Math.max(0, Math.min(100, (data.littleCurrent / data.littleLimit) * 100));
+      miniBar.style.width = `${fillPct}%`;
+      miniBarTxt.textContent = `${Math.round(data.littleCurrent)}/${Math.round(data.littleLimit)}`;
+    } else {
+      miniBar.style.width = '0%';
+      miniBarTxt.textContent = `0/0`;
+    }
+
+    const spinnerMode = document.getElementById('spinner').value;
+    const isWdChecked = document.getElementById('chk-wd').checked;
+    const btnYes = document.getElementById('btn-yes');
+    const btnUps = document.getElementById('btn-ups');
+
+    btnYes.disabled = false;
+    btnUps.disabled = false;
+
+    if (spinnerMode === 'capital' || spinnerMode === 'calibrate' || spinnerMode === 'aux' || spinnerMode === 'compras' || spinnerMode === 'my_little_cont') {
+      btnUps.disabled = true;
+      if (spinnerMode !== 'compras') { btnYes.disabled = true; }
+    } 
+    if (isWdChecked) { btnYes.disabled = true; }
+  }
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    const mode = document.getElementById('spinner').value;
+    const val = parseFloat(document.getElementById('input-num').value);
+    if (isNaN(val)) return;
+
+    if (mode === 'capital') { data.capitalBase = val; data.capitalActual = val; }
+    else if (mode === 'calibrate') { data.capitalActual = val; }
+    else if (mode === 'amount') { data.savedAmount = val; data.activeMode = 'amount'; }
+    else if (mode === 'percentage') { data.savedPct = val; data.activeMode = 'percentage'; }
+    else if (mode === 'aux') { data.auxLimit = val; }
+    else if (mode === 'compras') { data.totalRetirado = Math.max(0, val); }
+    else if (mode === 'my_little_cont') { data.littleLimit = Math.max(0, val); data.littleCurrent = data.littleLimit; }
+
+    document.getElementById('input-num').value = '';
+    document.getElementById('spinner').value = 'amount';
+    persist();
+  });
+
+  function calcDelta() {
+    const mode = document.getElementById('spinner').value;
+    const typed = parseFloat(document.getElementById('input-num').value);
+    if (!isNaN(typed) && typed > 0) {
+      return mode === 'percentage' ? data.capitalActual * (typed / 100) : typed;
+    }
+    return data.activeMode === 'percentage' ? data.capitalActual * (data.savedPct / 100) : data.savedAmount;
+  }
+
+  document.getElementById('btn-yes').addEventListener('click', () => {
+    const mode = document.getElementById('spinner').value;
+    const typed = parseFloat(document.getElementById('input-num').value);
+
+    if (mode === 'compras') {
+      if (isNaN(typed) || typed <= 0) return;
+      data.totalRetirado = Math.max(0, data.totalRetirado - typed);
+      if (data.littleCurrent > 0) { data.littleCurrent = Math.max(0, data.littleCurrent - typed); }
+      document.getElementById('input-num').value = '';
+      document.getElementById('spinner').value = 'amount';
+      persist();
+      return;
+    }
+    if (mode === 'my_little_cont') {
+      if (isNaN(typed) || typed <= 0) return;
+      data.littleCurrent = Math.max(0, data.littleCurrent - typed);
+      document.getElementById('input-num').value = '';
+      document.getElementById('spinner').value = 'amount';
+      persist();
+      return;
+    }
+
+    const delta = calcDelta();
+    if (delta <= 0) return;
+
+    data.capitalActual += delta;
+    data.totalGanado += delta;
+    data.mesNeto += delta;
+    data.opsWin += 1;
+
+    document.getElementById('input-num').value = '';
+    document.getElementById('chk-wd').checked = false;
+    document.getElementById('spinner').value = 'amount';
+    persist();
+  });
+
+  document.getElementById('btn-ups').addEventListener('click', () => {
+    const mode = document.getElementById('spinner').value;
+    const typed = parseFloat(document.getElementById('input-num').value);
+
+    if (mode === 'compras') {
+      if (isNaN(typed) || typed <= 0) return;
+      data.totalRetirado += typed;
+      data.littleCurrent = Math.min(data.littleLimit, data.littleCurrent + typed);
+      document.getElementById('input-num').value = '';
+      document.getElementById('spinner').value = 'amount';
+      persist();
+      return;
+    }
+    if (mode === 'my_little_cont') { return; }
+
+    const delta = calcDelta();
+    if (delta <= 0) return;
+    const isWd = document.getElementById('chk-wd').checked;
+
+    if (isWd) {
+      if (delta > data.capitalActual) return;
+      data.capitalActual -= delta;
+      data.totalRetirado += delta;
+    } else {
+      data.capitalActual -= delta;
+      data.totalPerdido += delta;
+      data.mesNeto -= delta;
+      data.opsLoss += 1;
+    }
+
+    document.getElementById('input-num').value = '';
+    document.getElementById('chk-wd').checked = false;
+    document.getElementById('spinner').value = 'amount';
+    persist();
+  });
+
+  document.getElementById('spinner').addEventListener('change', render);
+  document.getElementById('chk-wd').addEventListener('change', render);
+
+  document.getElementById('btn-next').addEventListener('click', () => {
+    if (confirm('¿Cerrar mes y reiniciar objetivo mensual?')) {
+      data.mesNeto = 0;
+      persist();
+    }
+  });
+
+  document.getElementById('btn-restore').addEventListener('click', () => {
+    if (confirm('¿Seguro que quieres poner todos los valores a 0?')) {
+      data = { ...INITIAL_STATE, capitalBase: 0, capitalActual: 0, littleLimit: 0, littleCurrent: 0 };
+      persist();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
